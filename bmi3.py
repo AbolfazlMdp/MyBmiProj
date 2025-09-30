@@ -10,16 +10,22 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import re
+import sqlite3
 
 class MyTypeError(Exception):
     def __str__(self):
-        return "Ur inputs were wrong ,Please enter correct inputs :)"
+        return "Error :)"
 
 
 class Ui_BMI(object):
     def setupUi(self, BMI):
         BMI.setObjectName("BMI")
         BMI.resize(385, 402)
+
+        self.conn=sqlite3.connect("bmi.db")
+        self.cursor=self.conn.cursor()
+        self.create_table()
+
         self.LineName = QtWidgets.QLineEdit(BMI)
         self.LineName.setGeometry(QtCore.QRect(30, 20, 113, 61))
         font = QtGui.QFont()
@@ -100,6 +106,20 @@ class Ui_BMI(object):
         self.pushButton.setText(_translate("BMI", "Start"))
         self.label_4.setText(_translate("BMI", "This is ur BMI:"))
 
+    def create_table(self):
+
+        self.cursor.execute('''
+        CREATE TABLE IF NOT EXISTS records 
+            (
+            id INTEGER PRIMARY KEY,               
+            name TEXT NOT NULL,                
+            weight REAL,   
+            height REAL,                                    
+            bmi REAL                
+            )
+    ''') 
+        self.conn.commit()
+
     def my_calculate_bmi(self):
         try:
             name = self.LineName.text()
@@ -122,6 +142,14 @@ class Ui_BMI(object):
             bmi= weight /(height**2)
 
             self.ShowBmi.setText(f"{bmi:.3f}")
+
+            self.cursor.execute('''
+        
+            INSERT INTO records(name,weight,height,bmi) VALUES (?,?,?,?)
+            ''',(name,weight,height,bmi))
+            self.conn.commit()
+
+
         except MyTypeError as e:
             self.ShowBmi.setText(str(e))    
 
